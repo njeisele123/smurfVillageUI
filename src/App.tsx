@@ -15,9 +15,19 @@ function animate(controls: any, renderer: any, scene: any, camera: any) {
 
 function onWindowResize(camera: any) {
   //camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+  //camera.updateProjectionMatrix(); // TODO: not a function
   //renderer.setSize(window.innerWidth, window.innerHeight);
 }
+
+const sky = new THREE.MeshBasicMaterial({
+  map: new THREE.TextureLoader().load("resources/blue.jpg"),
+  side: THREE.DoubleSide,
+});
+
+const grass = new THREE.MeshBasicMaterial({
+  map: new THREE.TextureLoader().load("resources/grass.jpg"),
+  side: THREE.DoubleSide,
+});
 
 function App() {
   const canvasRef = useRef(null);
@@ -50,7 +60,7 @@ function App() {
 
   // rxjs ticker
   useEffect(() => {
-    const ticker$ = interval(100);
+    const ticker$ = interval(500);
 
     const subscription = ticker$.subscribe(() => {
       // Force a re-render by setting a new object as state
@@ -157,6 +167,25 @@ function App() {
     const pointLight = new THREE.PointLight(0xffffff, 1, 100);
     pointLight.position.set(5, 5, 5);
     scene.add(pointLight);
+
+    // Sky box
+    const geometry = new THREE.BoxGeometry(100, 100, 100);
+    const x = false ? new THREE.MeshBasicMaterial({ color: 0xff0000 }) : sky;
+    const cubeMaterials = [sky, sky, sky, grass, sky, sky];
+    const cube = new THREE.Mesh(geometry, cubeMaterials);
+    cube.position.set(0,48, 5);
+
+    console.log("adding skybox");
+
+    const geo = new THREE.BoxGeometry(1, 1, 1);
+
+    // Create a blue material
+    const mat = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+
+    // Create a mesh with the geometry and material
+    const cuby = new THREE.Mesh(geo, mat);
+    cuby.position.set(0, -0.2, 1.4);
+    scene.add(cube);
 
     animate(controls, renderer, scene, camera);
 
