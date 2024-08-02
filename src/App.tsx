@@ -22,12 +22,29 @@ function onWindowResize(camera: any) {
 function App() {
   const canvasRef = useRef(null);
   const cameraRef = useRef<any>(null);
+  const rendererRef = useRef<any>(null);
+  const controlsRef = useRef<any>(null);
 
   // init the camera
   useEffect(() => {
+    const canvas = document.querySelector(".webGL2")!;
+    if (!canvas) {
+      console.log("No canvas");
+      return;
+    }
+
     cameraRef.current = new THREE.PerspectiveCamera(45, 800 / 600);
     cameraRef.current.position.z = 10;
-  }, []);
+
+    rendererRef.current = new THREE.WebGLRenderer({ canvas }); //new THREE.WebGLRenderer({canvas});
+    rendererRef.current.setSize(800, 600);
+
+    // Orbit controls
+    controlsRef.current = new OrbitControls(
+      cameraRef.current,
+      rendererRef.current.domElement
+    );
+  }, [canvasRef]);
 
   const [, setTick] = useState({});
 
@@ -45,7 +62,7 @@ function App() {
 
   // render the scene every frame
   useEffect(() => {
-    if (!cameraRef.current) {
+    if (!cameraRef.current || !rendererRef.current || !controlsRef.current) {
       // no camera yet, can't render
       return;
     }
@@ -53,18 +70,10 @@ function App() {
     // Scene setup
     const scene = new THREE.Scene();
     const camera = cameraRef.current;
-    scene.add(camera);
-    const canvas = document.querySelector(".webGL2")!;
-    if (!canvas) {
-      console.log("No canvas");
-      return;
-    }
-    const renderer = new THREE.WebGLRenderer({ canvas }); //new THREE.WebGLRenderer({canvas});
-    renderer.setSize(800, 600);
-    document.body.appendChild(renderer.domElement);
+    const renderer = rendererRef.current;
+    const controls = controlsRef.current;
 
-    // Orbit controls
-    const controls = new OrbitControls(camera, renderer.domElement);
+    scene.add(camera);
 
     // Mushroom cap (red dome)
     const capGeometry = new THREE.SphereGeometry(
