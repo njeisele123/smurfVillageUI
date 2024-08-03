@@ -3,8 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
-import { OrbitControls } from "three/examples/jsm/Addons.js";
+import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import { interval } from "rxjs";
+import { getMatch, getMatches, getSummonerByName } from "./clients/riotClient";
+
+// TODO: the scene should live outside the animation loop
 
 // Animation loop
 function animate(controls: any, renderer: any, scene: any, camera: any) {
@@ -19,6 +22,8 @@ function onWindowResize(camera: any) {
   //renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+const loader = new GLTFLoader();
+
 const sky = new THREE.MeshBasicMaterial({
   map: new THREE.TextureLoader().load("resources/blue.jpg"),
   side: THREE.DoubleSide,
@@ -26,7 +31,7 @@ const sky = new THREE.MeshBasicMaterial({
 
 const grass = new THREE.MeshBasicMaterial({
   map: new THREE.TextureLoader().load("resources/grass.jpg"),
-  side: THREE.DoubleSide,
+  side: THREE.BackSide,
 });
 
 function App() {
@@ -168,14 +173,22 @@ function App() {
     pointLight.position.set(5, 5, 5);
     scene.add(pointLight);
 
+    loader.load('resources/fizz.glb', function (gltf) {
+      
+      const model = gltf.scene;
+      model.position.set(0, -0.2, 1.4);
+      model.rotation.y = Math.PI / 2;
+      model.scale.setScalar(3);
+      scene.add(model);
+    });
+  
+
     // Sky box
     const geometry = new THREE.BoxGeometry(100, 100, 100);
     const x = false ? new THREE.MeshBasicMaterial({ color: 0xff0000 }) : sky;
     const cubeMaterials = [sky, sky, sky, grass, sky, sky];
     const cube = new THREE.Mesh(geometry, cubeMaterials);
-    cube.position.set(0,48, 5);
-
-    console.log("adding skybox");
+    cube.position.set(0, 48, 5);
 
     const geo = new THREE.BoxGeometry(1, 1, 1);
 
@@ -193,8 +206,20 @@ function App() {
     window.addEventListener("resize", onWindowResize); //, false);
   });
 
+  async function getMatchHistory(summonerName: string, tagLine: string) {
+    const { puuid } = await getSummonerByName(summonerName, tagLine);
+    const matches = await getMatches(puuid);
+    if (matches?.length) {
+      await getMatch(matches[0]);
+    }
+  }
+
   return (
     <>
+      <button onClick={() => getMatchHistory("DongleBuster", "bobbo")}>
+        pull data
+      </button>
+
       <canvas ref={canvasRef} style={{ left: 0 }} className="webGL2"></canvas>
     </>
   );
