@@ -12,7 +12,6 @@ import { getMatch, getMatches, getSummonerByName } from "./clients/riotClient";
 // Animation loop
 function animate(controls: any, renderer: any, scene: any, camera: any) {
   requestAnimationFrame(() => animate(controls, renderer, scene, camera));
-  console.log("Controls are: ", controls);
   controls.update();
   renderer.render(scene, camera);
 }
@@ -25,10 +24,30 @@ function onWindowResize(camera: any) {
 
 const loader = new GLTFLoader();
 
+// TODO: find good sky box images
 const sky = new THREE.MeshBasicMaterial({
   map: new THREE.TextureLoader().load("resources/blue.jpg"),
   side: THREE.DoubleSide,
 });
+
+
+function skyBoxSide(img: string) {
+  return new THREE.MeshBasicMaterial({
+    map: new THREE.TextureLoader().load(`resources/blue.jpg`),
+    side: THREE.DoubleSide,
+  });
+}
+
+
+const [skyBk, skyDn, skyFt, skyLf, skyRt, skyUp] = [
+  skyBoxSide('bluecloud_bk'),
+  skyBoxSide('bluecloud_dn'),
+  skyBoxSide('bluecloud_ft'),
+  skyBoxSide('bluecloud_lf'),
+  skyBoxSide('bluecloud_rt'),
+  skyBoxSide('bluecloud_up')
+]
+
 
 const grass = new THREE.MeshBasicMaterial({
   map: new THREE.TextureLoader().load("resources/grass.jpg"),
@@ -46,7 +65,6 @@ function App() {
   useEffect(() => {
     const canvas = document.querySelector(".webGL2")!;
     if (!canvas) {
-      console.log("No canvas");
       return;
     }
 
@@ -83,13 +101,10 @@ function App() {
       return;
     }
 
-    console.log("Setting up scene");
     // Scene setup
     const scene = new THREE.Scene();
     setScene(scene);
     const camera = cameraRef.current;
-    const renderer = rendererRef.current;
-    const controls = controlsRef.current;
 
     scene.add(camera);
 
@@ -189,7 +204,7 @@ function App() {
     // Sky box
     const geometry = new THREE.BoxGeometry(100, 100, 100);
     const x = false ? new THREE.MeshBasicMaterial({ color: 0xff0000 }) : sky;
-    const cubeMaterials = [sky, sky, sky, grass, sky, sky];
+    const cubeMaterials = [skyRt, skyLf, skyUp, grass, skyFt, skyBk];
     const cube = new THREE.Mesh(geometry, cubeMaterials);
     cube.position.set(0, 48, 5);
 
