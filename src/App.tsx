@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
@@ -12,6 +12,7 @@ import { getMatch, getMatches, getSummonerByName } from "./clients/riotClient";
 // Animation loop
 function animate(controls: any, renderer: any, scene: any, camera: any) {
   requestAnimationFrame(() => animate(controls, renderer, scene, camera));
+  console.log("Controls are: ", controls);
   controls.update();
   renderer.render(scene, camera);
 }
@@ -39,6 +40,7 @@ function App() {
   const cameraRef = useRef<any>(null);
   const rendererRef = useRef<any>(null);
   const controlsRef = useRef<any>(null);
+  const [scene, setScene] = useState<any>(null);
 
   // init the camera
   useEffect(() => {
@@ -75,15 +77,16 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // render the scene every frame
   useEffect(() => {
     if (!cameraRef.current || !rendererRef.current || !controlsRef.current) {
       // no camera yet, can't render
       return;
     }
 
+    console.log("Setting up scene");
     // Scene setup
     const scene = new THREE.Scene();
+    setScene(scene);
     const camera = cameraRef.current;
     const renderer = rendererRef.current;
     const controls = controlsRef.current;
@@ -200,10 +203,18 @@ function App() {
     cuby.position.set(0, -0.2, 1.4);
     scene.add(cube);
 
-    animate(controls, renderer, scene, camera);
-
     // Handle window resizing
     window.addEventListener("resize", onWindowResize); //, false);
+  }, [cameraRef, rendererRef, controlsRef]);
+
+  // animation loop
+  useEffect(() => {
+    if (controlsRef?.current && rendererRef?.current && cameraRef?.current && scene) {
+      animate(controlsRef.current, rendererRef.current, scene, cameraRef.current);
+    }
+  
+    // Handle window resizing
+    //window.addEventListener("resize", onWindowResize); //, false);
   });
 
   async function getMatchHistory(summonerName: string, tagLine: string) {
