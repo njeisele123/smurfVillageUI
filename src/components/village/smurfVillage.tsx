@@ -1,20 +1,19 @@
-import "./assets/tailwind.css";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-
 import * as THREE from "three";
 import { useCallback, useEffect, useRef, useState } from "react";
-import "./App.css";
 import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import { interval } from "rxjs";
-import { getMatch, getMatches, getSummonerByName } from "./clients/riotClient";
-import { getChampion } from "./clients/glbClient";
-import { initVillageScene } from "./scripts/villageScene";
-import { addAccounts } from "./clients/summonerClient";
+import { initVillageScene } from "../../scripts/villageScene";
+import {
+  getMatch,
+  getMatches,
+  getSummonerByName,
+} from "../../clients/riotClient";
+import { getChampion } from "../../clients/glbClient";
+import { addAccounts } from "../../clients/summonerClient";
 
 // TODO: move all the stuff with the village scene to its own component
 const FPS = 25;
 const TICK_INTERVAL = 1000 / FPS;
-const scene = initVillageScene();
 
 // Pull the environment/map to its own file
 
@@ -40,11 +39,13 @@ function animate(
 
 const loader = new GLTFLoader();
 
-function App() {
+function SmurfVillage() {
   const canvasRef = useRef(null);
   const cameraRef = useRef<THREE.Camera>();
   const rendererRef = useRef<THREE.WebGLRenderer>();
   const controlsRef = useRef<OrbitControls>();
+  const [scene, setScene] = useState<THREE.Scene>();
+
   const [, setTick] = useState({});
 
   const [championMixer, setChampionMixer] = useState<THREE.AnimationMixer>();
@@ -57,6 +58,9 @@ function App() {
     if (!canvas) {
       return;
     }
+
+    const scene = initVillageScene();
+    setScene(scene);
 
     cameraRef.current = new THREE.PerspectiveCamera(45, 800 / 600);
     cameraRef.current.position.z = 10;
@@ -80,12 +84,15 @@ function App() {
       setTick({});
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+        subscription.unsubscribe();
+        rendererRef?.current?.dispose(); 
+    }
   }, []);
 
   // add camera to scene
   useEffect(() => {
-    cameraRef?.current && scene.add(cameraRef?.current);
+    cameraRef?.current && scene?.add(cameraRef?.current);
   }, [cameraRef, rendererRef, controlsRef]);
 
   // animation loop
@@ -144,21 +151,16 @@ function App() {
 
   // TODO: use proper routing/side-bar for diff pages
   return (
-    <div className="parent">
-      <div className="sideBar">
-        <button onClick={() => getMatchHistory("DongleBuster", "bobbo")}>
-          pull data
-        </button>
-        <button onClick={() => loadChampionToScene("Zac")}>Zac</button>
-        <button onClick={() => loadChampionToScene(`Kha'zix`)}>Bug</button>
-        <button onClick={() => loadChampionToScene("Poppy")}>Poppy</button>
-        <button onClick={() => addAccounts([])}>Addd Accounts</button>
-      </div>
-      <div className="content">
-        <canvas ref={canvasRef} style={{ left: 0 }} className="webGL2"></canvas>
-      </div>
-    </div>
+    <>
+      <button onClick={() => loadChampionToScene("Zac")}>Zac</button>
+      <button onClick={() => loadChampionToScene(`Kha'zix`)}>Bug</button>
+      <button onClick={() => loadChampionToScene("Poppy")}>Poppy</button>
+      <button onClick={() => addAccounts([])}>Add accounts</button>
+
+
+      <canvas ref={canvasRef} style={{ left: 0 }} className="webGL2"></canvas>
+    </>
   );
 }
 
-export default App;
+export default SmurfVillage;
