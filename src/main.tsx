@@ -6,6 +6,7 @@ import "./styles/index.css";
 import "./index.css";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import SmurfVillage from "./components/village/smurfVillage.tsx";
+import { Accounts } from "./components/summoners/summoners.tsx";
 
 const router = createBrowserRouter([
   {
@@ -15,7 +16,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "accounts",
-        element: <>Accounts</>,
+        element: <Accounts />,
       },
       {
         path: "village",
