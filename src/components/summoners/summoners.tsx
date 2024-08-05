@@ -4,7 +4,12 @@
 // There will be an add/delete button to configure this
 
 import { useEffect, useState } from "react";
-import { AccountInfo, getAccounts } from "../../clients/summonerClient";
+import {
+  AccountInfo,
+  addAccounts,
+  deleteAccounts,
+  getAccounts,
+} from "../../clients/summonerClient";
 
 export function Accounts() {
   const [accounts, setAccounts] = useState<AccountInfo[]>([]);
@@ -27,20 +32,24 @@ export function Accounts() {
             value={acc.summoner_name}
             onChange={(e) => {
               accounts[idx].summoner_name = e.target.value;
-              setAccounts([...accounts])
+              setAccounts([...accounts]);
             }}
           />
           <input
             value={acc.tag_line}
             onChange={(e) => {
               accounts[idx].tag_line = e.target.value;
-              setAccounts([...accounts])
+              setAccounts([...accounts]);
             }}
           />
-          <button onClick={() => {
-            accounts.splice(idx, 1)
-            setAccounts([...accounts])
-          }} >-</button>
+          <button
+            onClick={() => {
+              accounts.splice(idx, 1);
+              setAccounts([...accounts]);
+            }}
+          >
+            -
+          </button>
         </div>
       ))}
       <button
@@ -50,7 +59,15 @@ export function Accounts() {
       >
         +
       </button>
-      <button>Save</button>
+      <button
+        onClick={() => {
+          // TODO: could do this more cleanly but easy to just delete all previous and add all new
+          deleteAccounts();
+          addAccounts(accounts);
+        }}
+      >
+        Save
+      </button>
     </div>
   );
 }

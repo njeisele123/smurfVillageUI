@@ -1,8 +1,5 @@
-import axios from "axios";
-
-
 export async function getIP() {
-    const ipResponse = await axios.get("http://ipinfo.io/?format=jsonp&callback=getIP");
-    
-    return ipResponse?.data?.ip;
+    const ipResponse = await fetch("//api.ipify.org?format=json");
+    const { ip } = await ipResponse.json();
+    return ip;
 }

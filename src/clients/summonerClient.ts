@@ -47,7 +47,7 @@ export async function deleteAccounts() {
     const response = await axios.delete(`${BASE_URL}/accounts/${ip}`);
     return response.data;
   } catch (error) {
-    console.error("Error adding accounts:", error);
+    console.error("Error deleting accounts:", error);
     throw error;
   }
 }
