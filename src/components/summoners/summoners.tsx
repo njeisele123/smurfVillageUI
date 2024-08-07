@@ -13,6 +13,7 @@ import {
 import "../../index.css";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { PlusIcon } from "@heroicons/react/24/solid";
+import Spinner from "../common/spinner";
 
 const inputStyle = `w-64 
 px-4
@@ -53,16 +54,22 @@ transition-colors duration-200`;
 
 export function Accounts() {
   const [accounts, setAccounts] = useState<AccountInfo[]>([]);
+  const [loading, setLoading] = useState(true);
 
   async function loadAccounts() {
     const userAccounts = await getAccounts();
     setAccounts(userAccounts);
+    setLoading(false);
   }
 
   // TODO: move this to redux
   useEffect(() => {
     loadAccounts();
   }, []);
+
+  if (loading) {
+    return <Spinner />;
+  }
 
   return (
     <div

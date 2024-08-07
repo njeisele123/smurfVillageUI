@@ -1,19 +1,23 @@
 import * as THREE from "three";
 
-function skyBoxSide(img: string) {
+function skyBoxSide(img: string, rotation?: number) {
+  const texture = new THREE.TextureLoader().load(`resources/skybox/${img}.png`)
+  texture.rotation = rotation ?? 0; // Rotate 90 degrees (π/2 radians)
+  texture.center.set(0.5, 0.5); // Set the center of rotation to the middle of the texture
+
   return new THREE.MeshBasicMaterial({
-    map: new THREE.TextureLoader().load(`resources/blue.jpg`),
+    map: texture,
     side: THREE.DoubleSide,
   });
 }
 
 const [skyBk, skyDn, skyFt, skyLf, skyRt, skyUp] = [
-  skyBoxSide("bluecloud_bk"),
-  skyBoxSide("bluecloud_dn"),
-  skyBoxSide("bluecloud_ft"),
-  skyBoxSide("bluecloud_lf"),
-  skyBoxSide("bluecloud_rt"),
-  skyBoxSide("bluecloud_up"),
+  skyBoxSide('xpos'),
+  skyBoxSide(""),
+  skyBoxSide("xneg"),
+  skyBoxSide("zneg"),
+  skyBoxSide("zpos"),
+  skyBoxSide("ypos", Math.PI / 2),
 ];
 
 const grass = new THREE.MeshBasicMaterial({

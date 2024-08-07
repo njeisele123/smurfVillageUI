@@ -9,7 +9,7 @@ export default function Root() {
 
   return (
     <>
-      <div id="sidebar" className="bg-white dark:bg-gray-800 text-black dark:text-white">
+      <div id="sidebar" className="bg-white dark:bg-gray-900 text-black dark:text-white">
         <nav>
           <Link to={`accounts`}>Accounts</Link>
           <Link to={`village`}>Village</Link>
