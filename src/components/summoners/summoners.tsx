@@ -30,6 +30,27 @@ focus:ring-2
 focus:ring-sky-300 dark:focus:ring-sky-300
 placeholder-gray-400 dark:placeholder-gray-400`;
 
+const plusStyle = `
+mt-4
+mx-auto
+flex items-center justify-center
+w-10 h-10
+bg-blue-500 hover:bg-blue-600
+text-white
+rounded-full
+focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50
+transition-colors duration-200
+`;
+
+const saveStyle = `
+flex items-center justify-center
+px-4 py-2
+bg-green-500 hover:bg-green-600
+text-white
+rounded-lg
+focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50
+transition-colors duration-200`;
+
 export function Accounts() {
   const [accounts, setAccounts] = useState<AccountInfo[]>([]);
 
@@ -78,19 +99,9 @@ export function Accounts() {
           </div>
         </div>
       ))}
-       <div className="w-full">
+      <div className="w-full">
         <button
-          className="
-          mt-4
-        mx-auto
-        flex items-center justify-center
-        w-10 h-10
-        bg-blue-500 hover:bg-blue-600
-        text-white
-        rounded-full
-        focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50
-        transition-colors duration-200
-      "
+          className={plusStyle}
           onClick={() => {
             setAccounts([...accounts, { summoner_name: "", tag_line: "" }]);
           }}
@@ -100,15 +111,7 @@ export function Accounts() {
       </div>
       <div className="w-full">
         <button
-          className="
-          flex items-center justify-center
-          px-4 py-2
-          bg-green-500 hover:bg-green-600
-          text-white
-          rounded-lg
-          focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50
-          transition-colors duration-200
-        "
+          className={saveStyle}
           style={{ float: "right" }}
           onClick={() => {
             // TODO: could do this more cleanly but easy to just delete all previous and add all new

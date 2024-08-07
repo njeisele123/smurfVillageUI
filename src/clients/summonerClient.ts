@@ -1,6 +1,7 @@
 import axios, { Axios, AxiosInstance } from "axios";
 import { DEV_HOST } from "../constants/constants";
 import { getIP } from "./ipClient";
+import { errorToast, successToast } from "../scripts/toast";
 
 const BASE_URL = `${DEV_HOST}/api/summoner`;
 
@@ -33,9 +34,11 @@ export async function addAccounts(accounts: AccountInfo[]) {
       ip,
       accounts,
     });
+
+    successToast("Changes saved successfully."); 
     return response.data;
   } catch (error) {
-    console.error("Error adding accounts:", error);
+    errorToast("Save failed. Try again later."); 
     throw error;
   }
 }
