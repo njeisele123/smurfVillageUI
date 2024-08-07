@@ -3,7 +3,7 @@
 // Fetches summoners for this IP on load
 // There will be an add/delete button to configure this
 
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   AccountInfo,
   addAccounts,
@@ -14,6 +14,7 @@ import "../../index.css";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import Spinner from "../common/spinner";
+import { AccountContextProvider, useAccountContext } from "../../contexts/accountContext";
 
 const inputStyle = `w-64 
 px-4
@@ -53,21 +54,13 @@ focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50
 transition-colors duration-200`;
 
 export function Accounts() {
-  const [accounts, setAccounts] = useState<AccountInfo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {accounts, setAccounts, loadAccounts, isLoadingAccounts} = useAccountContext();
 
-  async function loadAccounts() {
-    const userAccounts = await getAccounts();
-    setAccounts(userAccounts);
-    setLoading(false);
-  }
-
-  // TODO: move this to redux
   useEffect(() => {
     loadAccounts();
   }, []);
 
-  if (loading) {
+  if (isLoadingAccounts || !accounts) {
     return <Spinner />;
   }
 

@@ -5,6 +5,7 @@ import "./index.css";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import SmurfVillage from "./components/village/smurfVillage.tsx";
 import { Accounts } from "./components/summoners/summoners.tsx";
+import { AccountContextProvider } from "./contexts/accountContext.tsx";
 
 const router = createBrowserRouter([
   {
@@ -26,10 +27,12 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <div
-      id="toast"
-      className="fixed top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-green-500 text-white px-4 py-2 rounded-b-lg shadow-lg transition-transform duration-300 ease-in-out"
-    />
-    <RouterProvider router={router} />
+    <AccountContextProvider>
+      <div
+        id="toast"
+        className="fixed top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-green-500 text-white px-4 py-2 rounded-b-lg shadow-lg transition-transform duration-300 ease-in-out"
+      />
+      <RouterProvider router={router} />
+    </AccountContextProvider>
   </React.StrictMode>
 );

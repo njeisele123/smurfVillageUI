@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 function skyBoxSide(img: string, rotation?: number) {
   const texture = new THREE.TextureLoader().load(`resources/skybox/${img}.png`)
-  texture.rotation = rotation ?? 0; // Rotate 90 degrees (π/2 radians)
+  texture.rotation = rotation ?? 0;
   texture.center.set(0.5, 0.5); // Set the center of rotation to the middle of the texture
 
   return new THREE.MeshBasicMaterial({
