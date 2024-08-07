@@ -10,6 +10,7 @@ import {
   deleteAccounts,
   getAccounts,
 } from "../../clients/summonerClient";
+import "../../index.css"
 
 export function Accounts() {
   const [accounts, setAccounts] = useState<AccountInfo[]>([]);
@@ -25,7 +26,8 @@ export function Accounts() {
   }, []);
 
   return (
-    <div style={{ color: "white" }}>
+    <div>
+      <h1 className="text-2xl font-bold underline">Hello world!</h1>
       {accounts?.map((acc, idx) => (
         <div key={idx}>
           <input

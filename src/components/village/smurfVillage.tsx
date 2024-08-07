@@ -12,7 +12,7 @@ import { getChampion } from "../../clients/glbClient";
 import { addAccounts } from "../../clients/summonerClient";
 
 // TODO: move all the stuff with the village scene to its own component
-const FPS = 25;
+const FPS = 60;
 const TICK_INTERVAL = 1000 / FPS;
 
 // Pull the environment/map to its own file
