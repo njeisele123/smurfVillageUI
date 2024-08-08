@@ -12,8 +12,8 @@ export default function Root() {
     document.documentElement.classList.add("dark");
 
     //
-    apiCallCount$.subscribe((count) => {
-      setApiCallsCount(count);
+    apiCallCount$.subscribe((calls) => {
+      setApiCallsCount(calls.length);
     });
   }, []);
 

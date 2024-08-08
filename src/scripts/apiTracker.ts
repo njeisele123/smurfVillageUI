@@ -2,49 +2,35 @@
 // in the past minute. As Riot has a strict limit of 50 per minute, it is good to get an idea
 // of whether we are close to exceeding this.
 
-// TODO: bug, the cleanup interval appears to be adding a call
-import { Subject, timer, combineLatest } from 'rxjs';
+import { Subject, interval, merge } from 'rxjs';
 import { scan, startWith, map, share } from 'rxjs/operators';
 
-interface ApiCall {
-  timestamp: number;
-}
 
-const apiCallSubject = new Subject<ApiCall>();
-const cleanupSubject = new Subject<void>();
-const cleanupInterval = 60000; // 60 seconds
-const retentionPeriod = 60000; // 60 seconds
+const apiCall$ = new Subject<void>();
 
-const removeOldCalls = (calls: ApiCall[]): ApiCall[] => {
-  const cutoffTime = Date.now() - retentionPeriod;
-  return calls.filter(call => call.timestamp > cutoffTime);
-};
+// Create an observable for the timer to clear old values
+const clearOldValues$ = interval(10000); // Clear every 60 seconds
 
-// combine latest looks at both subjects
-const apiCalls$ = combineLatest([
-  apiCallSubject.pipe(startWith(null)),
-  cleanupSubject.pipe(startWith(null))
-]).pipe(
-  scan((acc: ApiCall[], [call]) => {
-    if (call) {
-      return removeOldCalls([...acc, call]);
+// Define the retention period (in milliseconds)
+const retentionPeriod = 60000; // 5 minutes
+
+// Combine API calls and clear events
+export const apiCallCount$ = merge(
+  apiCall$.pipe(map(() => ({ type: 'add', timestamp: Date.now() }))),
+  clearOldValues$.pipe(map(() => ({ type: 'clear', timestamp: Date.now() })))
+).pipe(
+  scan((acc: number[], event) => {
+    if (event.type === 'add') {
+      return [...acc, event.timestamp];
     } else {
-      return removeOldCalls(acc);
+      const cutoffTime = event.timestamp - retentionPeriod;
+      return acc.filter(timestamp => timestamp > cutoffTime);
     }
   }, []),
-  share() // share pipeline with all observers
-);
-
-export const apiCallCount$ = apiCalls$.pipe(
-  map(calls => calls.length),
+  startWith([]),
   share()
 );
 
-export const trackApiCall = () => {
-  apiCallSubject.next({ timestamp: Date.now() });
-};
-
-// Set up periodic cleanup
-timer(0, cleanupInterval).subscribe(() => {
-  cleanupSubject.next();
-});
+export function trackApiCall() {
+  apiCall$.next();
+}
