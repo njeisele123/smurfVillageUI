@@ -62,7 +62,9 @@ function SmurfVillage() {
       return;
     }
 
-    const scene = initInteriorScene(); // initVillageScene
+    canvas.addEventListener
+
+    const scene =  initVillageScene();
     setScene(scene);
 
     cameraRef.current = new THREE.PerspectiveCamera(45, 800 / 600);

@@ -26,6 +26,7 @@ export default function Root() {
         <nav>
           <Link to={`accounts`}>Accounts</Link>
           <Link to={`village`}>Village</Link>
+          <Link to={`house`}>House</Link>
         </nav>
       </div>
       <div

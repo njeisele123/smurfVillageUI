@@ -8,6 +8,7 @@ import { Accounts } from "./components/summoners/summoners.tsx";
 import { AccountContextProvider } from "./contexts/accountContext.tsx";
 import './scripts/apiTracker.ts'; // initialize API tracker
 import { apiCallCount$ } from "./scripts/apiTracker.ts";
+import House from "./components/houseInterior/house.tsx";
 
 
 
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
         path: "village",
         element: <SmurfVillage />,
       },
+      /*{
+        path: "house",
+        element: <House />,
+      },*/
     ],
   },
 ]);
