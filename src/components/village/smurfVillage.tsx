@@ -6,36 +6,19 @@ import { initVillageScene } from "../../scripts/villageScene";
 import {
   compareRanks,
   getLeagueEntries,
-  getMatch,
-  getMatches,
   getSummonerById,
   getSummonerByName,
 } from "../../clients/riotClient";
 import { getChampion } from "../../clients/glbClient";
 import { addAccounts } from "../../clients/summonerClient";
 import { useAccountContext } from "../../contexts/accountContext";
+import { initInteriorScene } from "../../scripts/sampleScene";
 
 // TODO: move all the stuff with the village scene to its own component
 const FPS = 60;
 const TICK_INTERVAL = 1000 / FPS;
 
-// Pull the environment/map to its own file
-
-async function getHighestRank(summonerName: string, tagLine: string) {
-  const { puuid } = await getSummonerByName(summonerName, tagLine);
-  const res = await getSummonerById(puuid);
-  const entries = await getLeagueEntries(res.id);
-  const accountRanks = entries.map(({tier}) => tier);
-  accountRanks.sort(compareRanks);
-
-  if (!accountRanks.length) {
-    return 'N/A'
-  }
-
-  const highest = accountRanks[accountRanks.length-1];
-  console.log("Highest rank is: ", highest);
-  return highest;
-}
+// TODO: refactor so that the 'get ranks' part lives outside of the scene itself, otherwise too confusing
 
 // Animation loop
 function animate(
@@ -58,6 +41,8 @@ function SmurfVillage() {
   const controlsRef = useRef<OrbitControls>();
   const [scene, setScene] = useState<THREE.Scene>();
   const { accounts, loadAccounts } = useAccountContext();
+  const [retrievedRanks, setRetrievedRanks] = useState(false);
+  const [rankInfo, setRankInfo] = useState<Record<string, string>>({});
 
   const [, setTick] = useState({});
 
@@ -77,7 +62,7 @@ function SmurfVillage() {
       return;
     }
 
-    const scene = initVillageScene();
+    const scene = initInteriorScene(); // initVillageScene
     setScene(scene);
 
     cameraRef.current = new THREE.PerspectiveCamera(45, 800 / 600);
@@ -133,6 +118,25 @@ function SmurfVillage() {
     }
   });
 
+  const getHighestRank = useCallback(
+    async (summonerName: string, tagLine: string) => {
+      const { puuid } = await getSummonerByName(summonerName, tagLine);
+      const res = await getSummonerById(puuid);
+      const entries = await getLeagueEntries(res.id);
+      const accountRanks = entries.map(({ tier }) => tier);
+      accountRanks.sort(compareRanks);
+
+      if (!accountRanks.length) {
+        return "N/A";
+      }
+
+      const highest = accountRanks[accountRanks.length - 1];
+      console.log(summonerName, " - ", highest);
+      return highest;
+    },
+    []
+  );
+
   const loadChampionToScene = useCallback(
     async (name: string) => {
       const arrayBuffer = await getChampion(name);
@@ -167,9 +171,25 @@ function SmurfVillage() {
     [scene, championModel, championMixer]
   );
 
+  const getRanks = useCallback(async () => {
+    console.log("EXECUTING THE HIGHEST RANK FUNC");
+    const ranks: Record<string, string> = {};
+    accounts?.forEach(async (acc) => {
+      ranks[acc.summoner_name] = await getHighestRank(
+        acc.summoner_name,
+        acc.tag_line
+      );
+    });
+    console.log("rank info: ", ranks);
+    setRankInfo(ranks);
+  }, [accounts]);
+
   useEffect(() => {
-    accounts?.map(acc => getHighestRank(acc.summoner_name, acc.tag_line))
-  }, [accounts])
+    if (!retrievedRanks && accounts) {
+      getRanks();
+      setRetrievedRanks(true);
+    }
+  }, [accounts, retrievedRanks]);
 
   // TODO: use proper routing/side-bar for diff pages
   return (

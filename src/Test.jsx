@@ -9,7 +9,6 @@ function Test() {
   const rendererRef = useRef(null);
 
   const [, setTick] = useState({});
-  console.log("here!")
 
   useEffect(() => {
     // Set up scene, camera, and renderer

@@ -2,6 +2,7 @@
 // in the past minute. As Riot has a strict limit of 50 per minute, it is good to get an idea
 // of whether we are close to exceeding this.
 
+// TODO: bug, the cleanup interval appears to be adding a call
 import { Subject, timer, combineLatest } from 'rxjs';
 import { scan, startWith, map, share } from 'rxjs/operators';
 
@@ -11,7 +12,7 @@ interface ApiCall {
 
 const apiCallSubject = new Subject<ApiCall>();
 const cleanupSubject = new Subject<void>();
-const cleanupInterval = 10000; // 10 seconds
+const cleanupInterval = 30000; // 60 seconds
 const retentionPeriod = 60000; // 60 seconds
 
 const removeOldCalls = (calls: ApiCall[]): ApiCall[] => {

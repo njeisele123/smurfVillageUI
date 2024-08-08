@@ -17,10 +17,6 @@ export default function Root() {
     });
   }, []);
 
-  const countPercentage = apiCallsCount / MAX_API_CALLS_PER_MINUTE;
-
-  console.log(apiCallsCount);
-
   return (
     <>
       <div

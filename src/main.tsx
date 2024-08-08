@@ -10,11 +10,6 @@ import './scripts/apiTracker.ts'; // initialize API tracker
 import { apiCallCount$ } from "./scripts/apiTracker.ts";
 
 
-// tracking API calls
-apiCallCount$.subscribe(count => {
-  console.log(`Current API call count: ${count}`);
-});
-
 
 const router = createBrowserRouter([
   {
