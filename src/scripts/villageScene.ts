@@ -1,7 +1,8 @@
 import * as THREE from "three";
+import { COLORS } from "../constants/constants";
 
 function skyBoxSide(img: string, rotation?: number) {
-  const texture = new THREE.TextureLoader().load(`resources/skybox/${img}.png`)
+  const texture = new THREE.TextureLoader().load(`resources/skybox/${img}.png`);
   texture.rotation = rotation ?? 0;
   texture.center.set(0.5, 0.5); // Set the center of rotation to the middle of the texture
 
@@ -12,7 +13,7 @@ function skyBoxSide(img: string, rotation?: number) {
 }
 
 const [skyBk, skyDn, skyFt, skyLf, skyRt, skyUp] = [
-  skyBoxSide('xpos'),
+  skyBoxSide("xpos"),
   skyBoxSide(""),
   skyBoxSide("xneg"),
   skyBoxSide("zneg"),
@@ -38,7 +39,7 @@ export const initVillageScene = () => {
     0,
     Math.PI / 2
   );
-  const capMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+  const capMaterial = new THREE.MeshPhongMaterial({ color: COLORS['DIAMOND'] });
   const cap = new THREE.Mesh(capGeometry, capMaterial);
   cap.position.y = 2;
   scene.add(cap);

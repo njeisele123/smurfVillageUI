@@ -12,7 +12,7 @@ interface ApiCall {
 
 const apiCallSubject = new Subject<ApiCall>();
 const cleanupSubject = new Subject<void>();
-const cleanupInterval = 30000; // 60 seconds
+const cleanupInterval = 60000; // 60 seconds
 const retentionPeriod = 60000; // 60 seconds
 
 const removeOldCalls = (calls: ApiCall[]): ApiCall[] => {

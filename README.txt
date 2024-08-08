@@ -29,6 +29,13 @@ Options:
 3. Menu for configuring accounts
 
 
+
+API: https://developer.riotgames.com/docs/lol
+
 TODOs:
 
     Set up a linter
+    Debug performance issues with scene 
+    Maybe try this React/Three JS wrapper https://docs.pmnd.rs/react-three-fiber/getting-started/introduction
+    Make the mushroom color dynamic based on rank
+    Add an interior scene with data
