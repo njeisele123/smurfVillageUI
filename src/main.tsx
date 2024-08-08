@@ -6,6 +6,15 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import SmurfVillage from "./components/village/smurfVillage.tsx";
 import { Accounts } from "./components/summoners/summoners.tsx";
 import { AccountContextProvider } from "./contexts/accountContext.tsx";
+import './scripts/apiTracker.ts'; // initialize API tracker
+import { apiCallCount$ } from "./scripts/apiTracker.ts";
+
+
+// tracking API calls
+apiCallCount$.subscribe(count => {
+  console.log(`Current API call count: ${count}`);
+});
+
 
 const router = createBrowserRouter([
   {

@@ -4,12 +4,16 @@ import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import { interval } from "rxjs";
 import { initVillageScene } from "../../scripts/villageScene";
 import {
+  compareRanks,
+  getLeagueEntries,
   getMatch,
   getMatches,
+  getSummonerById,
   getSummonerByName,
 } from "../../clients/riotClient";
 import { getChampion } from "../../clients/glbClient";
 import { addAccounts } from "../../clients/summonerClient";
+import { useAccountContext } from "../../contexts/accountContext";
 
 // TODO: move all the stuff with the village scene to its own component
 const FPS = 60;
@@ -17,12 +21,20 @@ const TICK_INTERVAL = 1000 / FPS;
 
 // Pull the environment/map to its own file
 
-async function getMatchHistory(summonerName: string, tagLine: string) {
+async function getHighestRank(summonerName: string, tagLine: string) {
   const { puuid } = await getSummonerByName(summonerName, tagLine);
-  const matches = await getMatches(puuid);
-  if (matches?.length) {
-    await getMatch(matches[0]);
+  const res = await getSummonerById(puuid);
+  const entries = await getLeagueEntries(res.id);
+  const accountRanks = entries.map(({tier}) => tier);
+  accountRanks.sort(compareRanks);
+
+  if (!accountRanks.length) {
+    return 'N/A'
   }
+
+  const highest = accountRanks[accountRanks.length-1];
+  console.log("Highest rank is: ", highest);
+  return highest;
 }
 
 // Animation loop
@@ -45,12 +57,18 @@ function SmurfVillage() {
   const rendererRef = useRef<THREE.WebGLRenderer>();
   const controlsRef = useRef<OrbitControls>();
   const [scene, setScene] = useState<THREE.Scene>();
+  const { accounts, loadAccounts } = useAccountContext();
 
   const [, setTick] = useState({});
 
   const [championMixer, setChampionMixer] = useState<THREE.AnimationMixer>();
   const [championModel, setChampionModel] =
     useState<THREE.Group<THREE.Object3DEventMap>>();
+
+  // load in latest account data on init
+  useEffect(() => {
+    loadAccounts();
+  }, []);
 
   // init the camera
   useEffect(() => {
@@ -85,9 +103,9 @@ function SmurfVillage() {
     });
 
     return () => {
-        subscription.unsubscribe();
-        rendererRef?.current?.dispose(); 
-    }
+      subscription.unsubscribe();
+      rendererRef?.current?.dispose();
+    };
   }, []);
 
   // add camera to scene
@@ -149,6 +167,10 @@ function SmurfVillage() {
     [scene, championModel, championMixer]
   );
 
+  useEffect(() => {
+    accounts?.map(acc => getHighestRank(acc.summoner_name, acc.tag_line))
+  }, [accounts])
+
   // TODO: use proper routing/side-bar for diff pages
   return (
     <>
@@ -157,8 +179,10 @@ function SmurfVillage() {
       <button onClick={() => loadChampionToScene("Poppy")}>Poppy</button>
       <button onClick={() => addAccounts([])}>Add accounts</button>
 
-
       <canvas ref={canvasRef} style={{ left: 0 }} className="webGL2"></canvas>
+      {accounts?.map((acc) => (
+        <div key={acc.summoner_name}>{acc.summoner_name}</div>
+      ))}
     </>
   );
 }
