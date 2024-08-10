@@ -1,25 +1,15 @@
 import * as THREE from "three";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { interval } from "rxjs";
-import { initVillageScene } from "../../scripts/villageScene";
 import {
   compareRanks,
   getLeagueEntries,
   getSummonerById,
   getSummonerByName,
 } from "../../clients/riotClient";
-import { getChampion } from "../../clients/glbClient";
-import { addAccounts } from "../../clients/summonerClient";
 import { useAccountContext } from "../../contexts/accountContext";
-import { initInteriorScene } from "../../scripts/sampleScene";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import {
-  Box,
-  Cylinder,
-  OrbitControls,
-  useAnimations,
-  useGLTF,
-} from "@react-three/drei";
+import { Billboard, OrbitControls, Plane, Text } from "@react-three/drei";
+import { MTLLoader, OBJLoader } from "three/examples/jsm/Addons.js";
 
 // TODO: move all the stuff with the village scene to its own component
 const FPS = 60;
@@ -31,8 +21,6 @@ function SmurfVillage() {
   const { accounts, loadAccounts } = useAccountContext();
   const [retrievedRanks, setRetrievedRanks] = useState(false);
   const [rankInfo, setRankInfo] = useState<Record<string, string>>({});
-
-  const [, setTick] = useState({});
 
   // load in latest account data on init
   useEffect(() => {
@@ -57,40 +45,6 @@ function SmurfVillage() {
     },
     []
   );
-
-  /*const loadChampionToScene = useCallback(
-    async (name: string) => {
-      const arrayBuffer = await getChampion(name);
-
-      // load from bytesand place in scene
-      loader.parse(arrayBuffer, "", function (gltf) {
-        const model = gltf.scene;
-        model.position.set(0, -0.25, 1.4);
-        model.rotation.y = Math.PI / 2;
-        model.scale.setScalar(3);
-        if (championModel) {
-          // remove existing champion model
-          scene?.remove(championModel);
-        }
-
-        scene?.add(model);
-
-        // play default animation
-        const mixer = new THREE.AnimationMixer(model);
-        const clips = gltf.animations;
-        if (clips?.length) {
-          // Create an AnimationAction for the first clip
-          const action = mixer.clipAction(clips[0]);
-          // Play the action
-          action.play();
-        }
-
-        setChampionModel(model);
-        setChampionMixer(mixer);
-      });
-    },
-    [scene, championModel, championMixer]
-  );*/
 
   const getRanks = useCallback(async () => {
     console.log("EXECUTING THE HIGHEST RANK FUNC");
@@ -130,6 +84,61 @@ function SmurfVillage() {
     return null;
   }
 
+  function BillboardText() {
+    return (
+      <Billboard
+        follow={true}
+        lockX={false}
+        lockY={false}
+        lockZ={false} // Lock the rotation on the z axis (default=false)
+        position={new THREE.Vector3(0, 4 , 0)}
+      >
+        <mesh>
+          <planeGeometry args={[5, 1.5]} />
+          <meshBasicMaterial color="white" transparent opacity={0.5} />
+        </mesh>
+        <Text fontSize={0.5} color={"black"} position={[0, 0, 0]}>
+          I'm a billboard
+        </Text>
+      </Billboard>
+    );
+  }
+
+  // https://www.turbosquid.com/AssetManager/Index.cfm?stgAction=getFiles&subAction=Download&intID=1251022&intType=3&csrf=5135AF5CDB4BDBEBF07CE8CFF7449A2BC066B427&showDownload=1&s=1
+  function MushroomModel() {
+    const [hovered, setHovered] = useState(false);
+    const materials = useLoader(MTLLoader, "resources/diamond-shroom.mtl");
+    const obj = useLoader(OBJLoader, "resources/gold-shroom.obj", (loader) => {
+      materials.preload();
+      loader.setMaterials(materials);
+    });
+    const ref = useRef();
+
+    return (
+      <group>
+        <BillboardText />
+        <primitive
+          object={obj}
+          ref={ref}
+          scale={[0.6, 0.6, 0.6]}
+          onPointerOver={() => {
+            setHovered(true);
+            console.log("ONN");
+          }}
+          onPointerOut={() => setHovered(false)}
+        />
+      </group>
+    );
+  }
+
+  function Ground() {
+    return (
+      <Plane args={[100, 100]} rotation={[-Math.PI / 2, 0, 0]}>
+        <meshStandardMaterial color="green" />
+      </Plane>
+    );
+  }
+
   return (
     <>
       <Canvas>
@@ -142,9 +151,8 @@ function SmurfVillage() {
           intensity={Math.PI}
         />
         <SkyBox />
-        <Cylinder args={[5, 7, 7, 32]} position={[0, 3, 0]}>
-          <meshStandardMaterial color={"#D2B48C"} side={THREE.DoubleSide} />
-        </Cylinder>
+        <MushroomModel />
+        <Ground />
         <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
         <OrbitControls />
       </Canvas>
