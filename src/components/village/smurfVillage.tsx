@@ -10,11 +10,7 @@ import { useAccountContext } from "../../contexts/accountContext";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
 import { Billboard, OrbitControls, Plane, Text } from "@react-three/drei";
 import { MTLLoader, OBJLoader } from "three/examples/jsm/Addons.js";
-
-// TODO: move all the stuff with the village scene to its own component
-const FPS = 60;
-const TICK_INTERVAL = 1000 / FPS;
-
+import { Outline } from "@react-three/postprocessing";
 // TODO: refactor so that the 'get ranks' part lives outside of the scene itself, otherwise too confusing
 
 function SmurfVillage() {
@@ -84,14 +80,14 @@ function SmurfVillage() {
     return null;
   }
 
-  function BillboardText() {
+  function HouseLabel({ position }: { position: number[] }) {
     return (
       <Billboard
         follow={true}
         lockX={false}
         lockY={false}
         lockZ={false} // Lock the rotation on the z axis (default=false)
-        position={new THREE.Vector3(0, 4 , 0)}
+        position={new THREE.Vector3(position[0], position[1] + 4, position[2])}
       >
         <mesh>
           <planeGeometry args={[5, 1.5]} />
@@ -105,22 +101,31 @@ function SmurfVillage() {
   }
 
   // https://www.turbosquid.com/AssetManager/Index.cfm?stgAction=getFiles&subAction=Download&intID=1251022&intType=3&csrf=5135AF5CDB4BDBEBF07CE8CFF7449A2BC066B427&showDownload=1&s=1
-  function MushroomModel() {
+  function MushroomModel({ position }: { position: number[] }) {
+    // TODO: don't load every time
+    const shroomMat = useLoader(MTLLoader, "resources/diamond-shroom.mtl");
+    shroomMat.preload();
+    const mushroomObj = useLoader(
+      OBJLoader,
+      "resources/gold-shroom.obj",
+      (loader) => {
+        loader.setMaterials(shroomMat);
+      }
+    );
+
     const [hovered, setHovered] = useState(false);
     const materials = useLoader(MTLLoader, "resources/diamond-shroom.mtl");
-    const obj = useLoader(OBJLoader, "resources/gold-shroom.obj", (loader) => {
-      materials.preload();
-      loader.setMaterials(materials);
-    });
+    const obj = mushroomObj.clone();
     const ref = useRef();
 
     return (
       <group>
-        <BillboardText />
+        <HouseLabel position={position} />
         <primitive
           object={obj}
           ref={ref}
           scale={[0.6, 0.6, 0.6]}
+          position={position}
           onPointerOver={() => {
             setHovered(true);
             console.log("ONN");
@@ -128,14 +133,6 @@ function SmurfVillage() {
           onPointerOut={() => setHovered(false)}
         />
       </group>
-    );
-  }
-
-  function Ground() {
-    return (
-      <Plane args={[100, 100]} rotation={[-Math.PI / 2, 0, 0]}>
-        <meshStandardMaterial color="green" />
-      </Plane>
     );
   }
 
@@ -151,14 +148,15 @@ function SmurfVillage() {
           intensity={Math.PI}
         />
         <SkyBox />
-        <MushroomModel />
-        <Ground />
+        {accounts?.map((acc, idx) => {
+          return <MushroomModel key={idx} position={[idx * 5, 0, 0]} />;
+        })}
+        <Plane args={[100, 100]} rotation={[-Math.PI / 2, 0, 0]}>
+          <meshStandardMaterial color="green" />
+        </Plane>
         <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
         <OrbitControls />
       </Canvas>
-      {accounts?.map((acc) => (
-        <div key={acc.summoner_name}>{acc.summoner_name}</div>
-      ))}
     </>
   );
 }
