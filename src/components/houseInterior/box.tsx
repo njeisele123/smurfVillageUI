@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useAnimations, useGLTF } from "@react-three/drei";
+import {
+  Cylinder,
+  OrbitControls,
+  useAnimations,
+  useGLTF,
+} from "@react-three/drei";
 import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 import { getChampion } from "../../clients/glbClient";
+import * as THREE from "three";
 
 function Box(props: any) {
   // This reference gives us direct access to the THREE.Mesh object
@@ -80,8 +86,9 @@ export default function BoxCanvas() {
         intensity={Math.PI}
       />
       <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
-      <Box position={[-1.2, 0, 0]} />
-      <Box position={[1.2, 0, 0]} />
+      <Cylinder args={[5, 7, 7, 32]} position={[0, 3, 0]}>
+        <meshStandardMaterial color={"#D2B48C"} side={THREE.DoubleSide} />
+      </Cylinder>
       <OrbitControls />
       <Model />
     </Canvas>

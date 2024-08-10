@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GLTFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 import { interval } from "rxjs";
 import { initVillageScene } from "../../scripts/villageScene";
 import {
@@ -13,6 +12,14 @@ import { getChampion } from "../../clients/glbClient";
 import { addAccounts } from "../../clients/summonerClient";
 import { useAccountContext } from "../../contexts/accountContext";
 import { initInteriorScene } from "../../scripts/sampleScene";
+import { Canvas, useLoader, useThree } from "@react-three/fiber";
+import {
+  Box,
+  Cylinder,
+  OrbitControls,
+  useAnimations,
+  useGLTF,
+} from "@react-three/drei";
 
 // TODO: move all the stuff with the village scene to its own component
 const FPS = 60;
@@ -20,105 +27,17 @@ const TICK_INTERVAL = 1000 / FPS;
 
 // TODO: refactor so that the 'get ranks' part lives outside of the scene itself, otherwise too confusing
 
-// Animation loop
-function animate(
-  controls: OrbitControls,
-  renderer: THREE.WebGLRenderer,
-  scene: THREE.Scene,
-  camera: THREE.Camera
-) {
-  requestAnimationFrame(() => animate(controls, renderer, scene, camera));
-  controls.update();
-  renderer.render(scene, camera);
-}
-
-const loader = new GLTFLoader();
-
 function SmurfVillage() {
-  const canvasRef = useRef(null);
-  const cameraRef = useRef<THREE.Camera>();
-  const rendererRef = useRef<THREE.WebGLRenderer>();
-  const controlsRef = useRef<OrbitControls>();
-  const [scene, setScene] = useState<THREE.Scene>();
   const { accounts, loadAccounts } = useAccountContext();
   const [retrievedRanks, setRetrievedRanks] = useState(false);
   const [rankInfo, setRankInfo] = useState<Record<string, string>>({});
 
   const [, setTick] = useState({});
 
-  const [championMixer, setChampionMixer] = useState<THREE.AnimationMixer>();
-  const [championModel, setChampionModel] =
-    useState<THREE.Group<THREE.Object3DEventMap>>();
-
   // load in latest account data on init
   useEffect(() => {
     loadAccounts();
   }, []);
-
-  // init the camera
-  useEffect(() => {
-    const canvas = document.querySelector(".webGL2")!;
-    if (!canvas) {
-      return;
-    }
-
-    canvas.addEventListener
-
-    const scene =  initVillageScene();
-    setScene(scene);
-
-    cameraRef.current = new THREE.PerspectiveCamera(45, 800 / 600);
-    cameraRef.current.position.z = 10;
-
-    rendererRef.current = new THREE.WebGLRenderer({ canvas }); //new THREE.WebGLRenderer({canvas});
-    rendererRef.current.setSize(800, 600);
-
-    // Orbit controls
-    controlsRef.current = new OrbitControls(
-      cameraRef.current,
-      rendererRef.current.domElement
-    );
-  }, [canvasRef]);
-
-  // rxjs ticker
-  useEffect(() => {
-    const ticker$ = interval(TICK_INTERVAL);
-
-    const subscription = ticker$.subscribe(() => {
-      // Force a re-render by setting a new object as state
-      setTick({});
-    });
-
-    return () => {
-      subscription.unsubscribe();
-      rendererRef?.current?.dispose();
-    };
-  }, []);
-
-  // add camera to scene
-  useEffect(() => {
-    cameraRef?.current && scene?.add(cameraRef?.current);
-  }, [cameraRef, rendererRef, controlsRef]);
-
-  // animation loop
-  useEffect(() => {
-    if (
-      controlsRef?.current &&
-      rendererRef?.current &&
-      cameraRef?.current &&
-      scene
-    ) {
-      // sync animation time scale with the ticker
-      championMixer &&
-        championMixer.update((championMixer.timeScale * 1.0) / FPS);
-      animate(
-        controlsRef.current,
-        rendererRef.current,
-        scene,
-        cameraRef.current
-      );
-    }
-  });
 
   const getHighestRank = useCallback(
     async (summonerName: string, tagLine: string) => {
@@ -139,7 +58,7 @@ function SmurfVillage() {
     []
   );
 
-  const loadChampionToScene = useCallback(
+  /*const loadChampionToScene = useCallback(
     async (name: string) => {
       const arrayBuffer = await getChampion(name);
 
@@ -171,7 +90,7 @@ function SmurfVillage() {
       });
     },
     [scene, championModel, championMixer]
-  );
+  );*/
 
   const getRanks = useCallback(async () => {
     console.log("EXECUTING THE HIGHEST RANK FUNC");
@@ -193,15 +112,42 @@ function SmurfVillage() {
     }
   }, [accounts, retrievedRanks]);
 
-  // TODO: use proper routing/side-bar for diff pages
+  function SkyBox() {
+    const { scene } = useThree();
+    const loader = new THREE.CubeTextureLoader();
+
+    const texture = loader.load([
+      "resources/skybox/xpos.png", // right
+      "resources/skybox/xneg.png", // left
+      "resources/skybox/ypos.png", // top
+      "resources/skybox/yneg.png", // bottom
+      "resources/skybox/zpos.png", // front
+      "resources/skybox/zneg.png", // back
+    ]);
+
+    scene.background = texture;
+
+    return null;
+  }
+
   return (
     <>
-      <button onClick={() => loadChampionToScene("Zac")}>Zac</button>
-      <button onClick={() => loadChampionToScene(`Kha'zix`)}>Bug</button>
-      <button onClick={() => loadChampionToScene("Poppy")}>Poppy</button>
-      <button onClick={() => addAccounts([])}>Add accounts</button>
-
-      <canvas ref={canvasRef} style={{ left: 0 }} className="webGL2"></canvas>
+      <Canvas>
+        <ambientLight intensity={Math.PI / 2} />
+        <spotLight
+          position={[10, 10, 10]}
+          angle={0.15}
+          penumbra={1}
+          decay={0}
+          intensity={Math.PI}
+        />
+        <SkyBox />
+        <Cylinder args={[5, 7, 7, 32]} position={[0, 3, 0]}>
+          <meshStandardMaterial color={"#D2B48C"} side={THREE.DoubleSide} />
+        </Cylinder>
+        <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+        <OrbitControls />
+      </Canvas>
       {accounts?.map((acc) => (
         <div key={acc.summoner_name}>{acc.summoner_name}</div>
       ))}
