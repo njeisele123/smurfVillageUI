@@ -26,10 +26,10 @@ const router = createBrowserRouter([
         path: "village",
         element: <SmurfVillage />,
       },
-      /*{
+      {
         path: "house",
         element: <House />,
-      },*/
+      },
     ],
   },
 ]);

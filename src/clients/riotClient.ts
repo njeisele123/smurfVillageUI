@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from "axios";
 import { DEV_HOST } from "../constants/constants";
-import { ToonShader2 } from "three/examples/jsm/Addons.js";
 import { trackApiCall } from "../scripts/apiTracker";
 
 const BASE_URL = `${DEV_HOST}/api/riot`;
