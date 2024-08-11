@@ -7,16 +7,23 @@ import {
   getSummonerByName,
 } from "../../clients/riotClient";
 import { useAccountContext } from "../../contexts/accountContext";
-import { Canvas, useLoader, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { Billboard, OrbitControls, Plane, Text } from "@react-three/drei";
 import { MTLLoader, OBJLoader } from "three/examples/jsm/Addons.js";
 import { Outline } from "@react-three/postprocessing";
+import Spinner from "../common/spinner";
 // TODO: refactor so that the 'get ranks' part lives outside of the scene itself, otherwise too confusing
+
+type AccountRankInfo = {
+  rank: string;
+  summoner_name: string;
+  tag_line: string;
+};
 
 function SmurfVillage() {
   const { accounts, loadAccounts } = useAccountContext();
   const [retrievedRanks, setRetrievedRanks] = useState(false);
-  const [rankInfo, setRankInfo] = useState<Record<string, string>>({});
+  const [rankInfo, setRankInfo] = useState<AccountRankInfo[]>();
 
   // load in latest account data on init
   useEffect(() => {
@@ -44,14 +51,15 @@ function SmurfVillage() {
 
   const getRanks = useCallback(async () => {
     console.log("EXECUTING THE HIGHEST RANK FUNC");
-    const ranks: Record<string, string> = {};
-    accounts?.forEach(async (acc) => {
-      ranks[acc.summoner_name] = await getHighestRank(
-        acc.summoner_name,
-        acc.tag_line
-      );
-    });
-    console.log("rank info: ", ranks);
+    const ranks = [];
+    for (const acc of accounts ?? []) {
+      ranks.push({
+        summoner_name: acc.summoner_name,
+        tag_line: acc.tag_line,
+        rank: await getHighestRank(acc.summoner_name, acc.tag_line),
+      });
+    }
+
     setRankInfo(ranks);
   }, [accounts]);
 
@@ -80,7 +88,13 @@ function SmurfVillage() {
     return null;
   }
 
-  function HouseLabel({ position }: { position: number[] }) {
+  function HouseLabel({
+    position,
+    text,
+  }: {
+    position: number[];
+    text: string;
+  }) {
     return (
       <Billboard
         follow={true}
@@ -94,20 +108,33 @@ function SmurfVillage() {
           <meshBasicMaterial color="white" transparent opacity={0.5} />
         </mesh>
         <Text fontSize={0.5} color={"black"} position={[0, 0, 0]}>
-          I'm a billboard
+          {text}
         </Text>
       </Billboard>
     );
   }
 
   // https://www.turbosquid.com/AssetManager/Index.cfm?stgAction=getFiles&subAction=Download&intID=1251022&intType=3&csrf=5135AF5CDB4BDBEBF07CE8CFF7449A2BC066B427&showDownload=1&s=1
-  function MushroomModel({ position }: { position: number[] }) {
+  function MushroomModel({
+    position,
+    text,
+    rank,
+  }: {
+    position: number[];
+    text: string;
+    rank: string;
+  }) {
     // TODO: don't load every time
-    const shroomMat = useLoader(MTLLoader, "resources/diamond-shroom.mtl");
+    console.log("mat: ",   `resources/${rank.toLowerCase()}-shroom.mtl`);
+    const shroomMat = useLoader(
+      MTLLoader,
+      `resources/diamond-shroom.mtl`
+    );
     shroomMat.preload();
+    //console.log('rank: ', rank)
     const mushroomObj = useLoader(
       OBJLoader,
-      "resources/gold-shroom.obj",
+      `resources/gold-shroom.obj`,
       (loader) => {
         loader.setMaterials(shroomMat);
       }
@@ -120,7 +147,7 @@ function SmurfVillage() {
 
     return (
       <group>
-        <HouseLabel position={position} />
+        <HouseLabel position={position} text={text} />
         <primitive
           object={obj}
           ref={ref}
@@ -136,6 +163,12 @@ function SmurfVillage() {
     );
   }
 
+  console.log("rank: ", rankInfo);
+
+  if (!rankInfo) {
+    return <Spinner />;
+  }
+
   return (
     <>
       <Canvas>
@@ -148,8 +181,15 @@ function SmurfVillage() {
           intensity={Math.PI}
         />
         <SkyBox />
-        {accounts?.map((acc, idx) => {
-          return <MushroomModel key={idx} position={[idx * 5, 0, 0]} />;
+        {rankInfo?.map((acc, idx) => {
+          return (
+            <MushroomModel
+              key={idx}
+              position={[idx * 7, 0, 0]}
+              text={acc.summoner_name}
+              rank={acc.rank}
+            />
+          );
         })}
         <Plane args={[100, 100]} rotation={[-Math.PI / 2, 0, 0]}>
           <meshStandardMaterial color="green" />
