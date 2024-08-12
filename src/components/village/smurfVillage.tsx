@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   compareRanks,
   getLeagueEntries,
@@ -12,6 +12,7 @@ import { Billboard, OrbitControls, Plane, Text } from "@react-three/drei";
 import { MTLLoader, OBJLoader } from "three/examples/jsm/Addons.js";
 import { Outline } from "@react-three/postprocessing";
 import Spinner from "../common/spinner";
+import { useNavigate } from "react-router-dom";
 // TODO: refactor so that the 'get ranks' part lives outside of the scene itself, otherwise too confusing
 
 type AccountRankInfo = {
@@ -20,7 +21,19 @@ type AccountRankInfo = {
   tag_line: string;
 };
 
+const RANK_TO_IDX: any = {
+  iron: 0,
+  bronze: 1,
+  silver: 2,
+  gold: 3,
+  platinum: 4,
+  emerald: 5,
+  diamond: 6,
+};
+
 function SmurfVillage() {
+  const navigate = useNavigate();
+
   const { accounts, loadAccounts } = useAccountContext();
   const [retrievedRanks, setRetrievedRanks] = useState(false);
   const [rankInfo, setRankInfo] = useState<AccountRankInfo[]>();
@@ -114,43 +127,65 @@ function SmurfVillage() {
     );
   }
 
+  const [mushrooms, setMushrooms] = useState<any[]>([]);
+
+  // load in houses
+  useEffect(() => {
+    const loadMushroom = (mtlPath: string, objPath: string) => {
+      return new Promise((resolve) => {
+        const mtlLoader = new MTLLoader();
+        mtlLoader.load(mtlPath, (materials) => {
+          materials.preload();
+          const objLoader = new OBJLoader();
+          objLoader.setMaterials(materials);
+          objLoader.load(objPath, (object) => {
+            resolve(object);
+          });
+        });
+      });
+    };
+
+    const ranks = [
+      "iron",
+      "bronze",
+      "silver",
+      "gold",
+      "platinum",
+      "emerald",
+      "diamond",
+    ];
+    const mushFiles = ranks.map((rank) => ({
+      rank,
+      mtl: `resources/${rank}-shroom.mtl`,
+      obj: `resources/${rank}-shroom.obj`,
+    }));
+
+    Promise.all(mushFiles.map((data) => loadMushroom(data.mtl, data.obj))).then(
+      (loadedMushrooms) => {
+        setMushrooms(loadedMushrooms);
+      }
+    );
+  }, []);
+
   // https://www.turbosquid.com/AssetManager/Index.cfm?stgAction=getFiles&subAction=Download&intID=1251022&intType=3&csrf=5135AF5CDB4BDBEBF07CE8CFF7449A2BC066B427&showDownload=1&s=1
   function MushroomModel({
     position,
     text,
-    rank,
+    obj,
   }: {
     position: number[];
     text: string;
     rank: string;
+    obj: any;
   }) {
-    // TODO: don't load every time
-    console.log("mat: ",   `resources/${rank.toLowerCase()}-shroom.mtl`);
-    const shroomMat = useLoader(
-      MTLLoader,
-      `resources/diamond-shroom.mtl`
-    );
-    shroomMat.preload();
-    //console.log('rank: ', rank)
-    const mushroomObj = useLoader(
-      OBJLoader,
-      `resources/gold-shroom.obj`,
-      (loader) => {
-        loader.setMaterials(shroomMat);
-      }
-    );
-
     const [hovered, setHovered] = useState(false);
-    const materials = useLoader(MTLLoader, "resources/diamond-shroom.mtl");
-    const obj = mushroomObj.clone();
-    const ref = useRef();
 
+    // TODO: bug, it is showing same mat for all obj
     return (
       <group>
         <HouseLabel position={position} text={text} />
         <primitive
           object={obj}
-          ref={ref}
           scale={[0.6, 0.6, 0.6]}
           position={position}
           onPointerOver={() => {
@@ -158,6 +193,7 @@ function SmurfVillage() {
             console.log("ONN");
           }}
           onPointerOut={() => setHovered(false)}
+          //onClick={() => navigate('/house')} // TODO: make a prompt for them to click 'E' or something
         />
       </group>
     );
@@ -168,6 +204,8 @@ function SmurfVillage() {
   if (!rankInfo) {
     return <Spinner />;
   }
+
+  console.log("shrooms: ", mushrooms);
 
   return (
     <>
@@ -181,16 +219,21 @@ function SmurfVillage() {
           intensity={Math.PI}
         />
         <SkyBox />
-        {rankInfo?.map((acc, idx) => {
-          return (
-            <MushroomModel
-              key={idx}
-              position={[idx * 7, 0, 0]}
-              text={acc.summoner_name}
-              rank={acc.rank}
-            />
-          );
-        })}
+        {mushrooms?.length &&
+          rankInfo?.map((acc, idx) => {
+            return (
+              <>
+                <MushroomModel
+                  key={idx}
+                  position={[idx * 7, 0, 0]}
+                  text={acc.summoner_name}
+                  rank={acc.rank}
+                  obj={mushrooms[RANK_TO_IDX[acc.rank.toLowerCase()]].clone()}
+                />
+              </>
+            );
+          })}
+
         <Plane args={[100, 100]} rotation={[-Math.PI / 2, 0, 0]}>
           <meshStandardMaterial color="green" />
         </Plane>

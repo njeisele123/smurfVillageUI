@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import {
   Cylinder,
   OrbitControls,
   useAnimations,
   useGLTF,
 } from "@react-three/drei";
-import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
+import {
+  GLTF,
+  GLTFLoader,
+  MTLLoader,
+  OBJLoader,
+} from "three/examples/jsm/Addons.js";
 import { getChampion } from "../../clients/glbClient";
 import * as THREE from "three";
 
@@ -75,6 +80,46 @@ function Model() {
 }
 
 export default function BoxCanvas() {
+  const [shrooms, setShrooms] = useState<any[]>([]);
+  const [goldShroom, setGoldShroom] = useState<any>();
+  const [platShroom, setPlatshroom] = useState<any>();
+  console.log("shrooms: ", shrooms);
+
+  const [mushrooms, setMushrooms] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadMushroom = (mtlPath: string, objPath: string) => {
+      return new Promise((resolve) => {
+        const mtlLoader = new MTLLoader();
+        mtlLoader.load(mtlPath, (materials) => {
+          materials.preload();
+          const objLoader = new OBJLoader();
+          objLoader.setMaterials(materials);
+          objLoader.load(objPath, (object) => {
+            resolve(object);
+          });
+        });
+      });
+    };
+
+    const mushroomData = [
+      {
+        mtl: "resources/platinum-shroom.mtl",
+        obj: "resources/platinum-shroom.obj",
+      },
+      { mtl: "resources/gold-shroom.mtl", obj: "resources/gold-shroom.obj" },
+      // Add more mushrooms here as needed
+    ];
+
+    Promise.all(
+      mushroomData.map((data) => loadMushroom(data.mtl, data.obj))
+    ).then((loadedMushrooms) => {
+      setMushrooms(loadedMushrooms);
+    });
+  }, []); 
+
+  console.log('loaded: ', mushrooms);
+
   return (
     <Canvas>
       <ambientLight intensity={Math.PI / 2} />
@@ -90,6 +135,15 @@ export default function BoxCanvas() {
         <meshStandardMaterial color={"#D2B48C"} side={THREE.DoubleSide} />
       </Cylinder>
       <OrbitControls />
+      {mushrooms.map((mush, idx) => (
+        <primitive
+          key={idx}
+          object={mush}
+          scale={[0.6, 0.6, 0.6]}
+          position={[0, 0, 2 * idx]}
+        />
+      ))}
+
       <Model />
     </Canvas>
   );
