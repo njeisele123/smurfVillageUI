@@ -19,6 +19,7 @@ type AccountRankInfo = {
   rank: string;
   summoner_name: string;
   tag_line: string;
+  puuid: string;
 };
 
 const RANK_TO_IDX: any = {
@@ -43,33 +44,29 @@ function SmurfVillage() {
     loadAccounts();
   }, []);
 
-  const getHighestRank = useCallback(
-    async (summonerName: string, tagLine: string) => {
-      const { puuid } = await getSummonerByName(summonerName, tagLine);
-      const res = await getSummonerById(puuid);
-      const entries = await getLeagueEntries(res.id);
-      const accountRanks = entries.map(({ tier }) => tier);
-      accountRanks.sort(compareRanks);
+  const getHighestRank = useCallback(async (puuid: string) => {
+    const res = await getSummonerById(puuid);
+    const entries = await getLeagueEntries(res.id);
+    const accountRanks = entries.map(({ tier }) => tier);
+    accountRanks.sort(compareRanks);
 
-      if (!accountRanks.length) {
-        return "N/A";
-      }
+    if (!accountRanks.length) {
+      return "N/A";
+    }
 
-      const highest = accountRanks[accountRanks.length - 1];
-      console.log(summonerName, " - ", highest);
-      return highest;
-    },
-    []
-  );
+    return accountRanks[accountRanks.length - 1];
+  }, []);
 
   const getRanks = useCallback(async () => {
     console.log("EXECUTING THE HIGHEST RANK FUNC");
     const ranks = [];
-    for (const acc of accounts ?? []) {
+    for (const { summoner_name, tag_line } of accounts ?? []) {
+      const { puuid } = await getSummonerByName(summoner_name, tag_line);
       ranks.push({
-        summoner_name: acc.summoner_name,
-        tag_line: acc.tag_line,
-        rank: await getHighestRank(acc.summoner_name, acc.tag_line),
+        summoner_name: summoner_name,
+        tag_line: tag_line,
+        rank: await getHighestRank(puuid),
+        puuid,
       });
     }
 
@@ -172,11 +169,13 @@ function SmurfVillage() {
     position,
     text,
     obj,
+    puuid,
   }: {
     position: number[];
     text: string;
     rank: string;
     obj: any;
+    puuid: string;
   }) {
     const [hovered, setHovered] = useState(false);
 
@@ -192,8 +191,9 @@ function SmurfVillage() {
             setHovered(true);
             console.log("ONN");
           }}
+          // TODO: pass puuid in here so it can be in param
           onPointerOut={() => setHovered(false)}
-          //onClick={() => navigate('/house')} // TODO: make a prompt for them to click 'E' or something
+          onClick={() => navigate(`/house?puuid=${puuid}`)} // TODO: make a prompt for them to click 'E' or something
         />
       </group>
     );
@@ -204,8 +204,6 @@ function SmurfVillage() {
   if (!rankInfo) {
     return <Spinner />;
   }
-
-  console.log("shrooms: ", mushrooms);
 
   return (
     <>
@@ -228,6 +226,7 @@ function SmurfVillage() {
                   position={[idx * 7, 0, 0]}
                   text={acc.summoner_name}
                   rank={acc.rank}
+                  puuid={acc.puuid}
                   obj={mushrooms[RANK_TO_IDX[acc.rank.toLowerCase()]].clone()}
                 />
               </>
