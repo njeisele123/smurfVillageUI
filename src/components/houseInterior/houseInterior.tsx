@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import {
   Cylinder,
   OrbitControls,
   useAnimations,
   useGLTF,
+  useTexture,
 } from "@react-three/drei";
 import {
   GLTF,
@@ -14,39 +15,34 @@ import {
 } from "three/examples/jsm/Addons.js";
 import { getChampion } from "../../clients/glbClient";
 import * as THREE from "three";
+import { PI } from "three/webgpu";
 
-function Box(props: any) {
-  // This reference gives us direct access to the THREE.Mesh object
+function MyModel({ url, onClick }: { url: string; onClick: () => void }) {
+  const obj = useLoader(OBJLoader, url);
   const ref = useRef<any>();
-  // Hold state for hovered and clicked events
-  const [hovered, hover] = useState(false);
-  const [clicked, click] = useState(false);
-  // Subscribe this component to the render-loop, rotate the mesh every frame
-  useFrame((state, delta) => (ref.current.rotation.x += delta));
-  // Return the view, these are regular Threejs elements expressed in JSX
+
   return (
-    <mesh
-      {...props}
+    <primitive
+      object={obj}
       ref={ref}
-      scale={clicked ? 1.5 : 1}
-      onClick={(event) => click(!clicked)}
-      onPointerOver={(event) => (event.stopPropagation(), hover(true))}
-      onPointerOut={(event) => hover(false)}
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={hovered ? "hotpink" : "orange"} />
-    </mesh>
+      scale={[0.4, 0.4, 0.4]}
+      position={[0, 0, -4]}
+      rotation={[0, (Math.PI / 2) * 3, 0]}
+      onClick={() => {
+        onClick();
+      }}
+    />
   );
 }
 
-function Model() {
+function Model({ champion }: { champion: string }) {
   const group = useRef();
   const [gltf, setGltf] = useState<GLTF>();
   const { actions } = useAnimations(gltf?.animations ?? [], group);
 
   useEffect(() => {
     const init = async () => {
-      const arrayBuffer = await getChampion("Zac");
+      const arrayBuffer = await getChampion(champion);
       const loader = new GLTFLoader();
       loader.parse(
         arrayBuffer,
@@ -63,8 +59,10 @@ function Model() {
       );
     };
 
-    init();
-  }, []);
+    if (champion) {
+      init();
+    }
+  }, [champion]);
 
   useEffect(() => {
     if (gltf && actions) {
@@ -76,10 +74,16 @@ function Model() {
 
   if (!gltf) return null;
 
-  return <primitive object={gltf.scene} ref={group} />;
+  return <primitive object={gltf.scene} ref={group} scale={[1, 1, 1]} />;
 }
 
-export default function BoxCanvas() {
+export default function HouseInteriorCanvas({
+  setShowMatchHistory,
+  champion,
+}: {
+  setShowMatchHistory: () => void;
+  champion: string;
+}) {
   return (
     <Canvas>
       <ambientLight intensity={Math.PI / 2} />
@@ -92,10 +96,16 @@ export default function BoxCanvas() {
       />
       <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
       <Cylinder args={[5, 7, 7, 32]} position={[0, 3, 0]}>
-        <meshStandardMaterial color={"#D2B48C"} side={THREE.DoubleSide} />
+        <meshStandardMaterial color={"#654321"} side={THREE.DoubleSide} />
       </Cylinder>
+      <Suspense fallback={null}>
+        <MyModel
+          url="resources/bookshelf.obj"
+          onClick={() => setShowMatchHistory()}
+        />
+      </Suspense>
       <OrbitControls />
-      <Model />
+      <Model champion={champion} />
     </Canvas>
   );
 }

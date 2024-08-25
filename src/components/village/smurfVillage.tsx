@@ -32,6 +32,8 @@ const RANK_TO_IDX: any = {
   diamond: 6,
 };
 
+const mtlLoader = new MTLLoader();
+
 function SmurfVillage() {
   const navigate = useNavigate();
 
@@ -130,7 +132,6 @@ function SmurfVillage() {
   useEffect(() => {
     const loadMushroom = (mtlPath: string, objPath: string) => {
       return new Promise((resolve) => {
-        const mtlLoader = new MTLLoader();
         mtlLoader.load(mtlPath, (materials) => {
           materials.preload();
           const objLoader = new OBJLoader();
